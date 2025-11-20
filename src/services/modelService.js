@@ -62,51 +62,27 @@ class ModelService {
     return {
       claude: {
         provider: 'anthropic',
-        description: 'Claude models from Anthropic',
+        description: 'Claude models available via Droid CLI',
         models: [
-          'claude-sonnet-4-5-20250929',
           'claude-opus-4-1-20250805',
-          'claude-sonnet-4-20250514',
-          'claude-opus-4-20250514',
-          'claude-3-7-sonnet-20250219',
-          'claude-3-5-sonnet-20241022',
-          'claude-3-5-haiku-20241022',
-          'claude-3-opus-20240229',
-          'claude-3-haiku-20240307'
+          'claude-sonnet-4-5-20250929',
+          'claude-haiku-4-5-20251001'
         ]
       },
       openai: {
         provider: 'openai',
-        description: 'OpenAI GPT models',
-        models: [
-          'gpt-4o',
-          'gpt-4o-mini',
-          'gpt-4.1',
-          'gpt-4.1-mini',
-          'gpt-4.1-nano',
-          'gpt-4-turbo',
-          'gpt-4',
-          'gpt-3.5-turbo',
-          'o3',
-          'o4-mini',
-          'chatgpt-4o-latest'
-        ]
+        description: 'OpenAI-compatible models exposed by Droid CLI',
+        models: ['gpt-5-2025-08-07', 'gpt-5-codex', 'gpt-5.1', 'gpt-5.1-codex']
+      },
+      common: {
+        provider: 'fireworks',
+        description: 'Other Droid-supported providers sharing the common endpoint',
+        models: ['glm-4.6']
       },
       gemini: {
         provider: 'google',
-        description: 'Google Gemini models',
-        models: [
-          'gemini-1.5-pro',
-          'gemini-1.5-flash',
-          'gemini-2.0-flash',
-          'gemini-2.0-flash-exp',
-          'gemini-2.0-flash-thinking',
-          'gemini-2.0-flash-thinking-exp',
-          'gemini-2.0-pro',
-          'gemini-2.5-flash',
-          'gemini-2.5-flash-lite',
-          'gemini-2.5-pro'
-        ]
+        description: 'Gemini models routed through Droid CLI',
+        models: ['gemini-3-pro-preview']
       }
     }
   }
