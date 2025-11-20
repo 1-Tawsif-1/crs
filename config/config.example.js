@@ -16,8 +16,18 @@ let redisConfig = {
 
 if (process.env.REDIS_URL) {
   try {
+    const rawRedisUrl = process.env.REDIS_URL.trim()
+    const urlMatch = rawRedisUrl.match(/rediss?:\/\/[^\s"']+/i)
+    if (urlMatch) {
+      if (urlMatch[0] !== rawRedisUrl) {
+        console.log('🧹 Extracted REDIS_URL from command-style value provided by hosting environment')
+      }
+    } else {
+      throw new Error('Could not find redis:// or rediss:// URL in REDIS_URL value')
+    }
+
     // Replace redis:// with rediss:// if needed (Upstash requires TLS)
-    let redisUrl = process.env.REDIS_URL
+    let redisUrl = urlMatch[0]
     if (redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
       redisUrl = redisUrl.replace('redis://', 'rediss://')
       console.log('🔒 Auto-upgrading redis:// to rediss:// for TLS connection')
