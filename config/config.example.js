@@ -1,6 +1,35 @@
 const path = require('path')
 require('dotenv').config()
 
+// Parse REDIS_URL if present (common in cloud deployments like Render)
+let redisConfig = {
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: parseInt(process.env.REDIS_PORT) || 6379,
+  password: process.env.REDIS_PASSWORD || '',
+  db: parseInt(process.env.REDIS_DB) || 0,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
+  retryDelayOnFailover: 100,
+  maxRetriesPerRequest: 3,
+  lazyConnect: true,
+  enableTLS: process.env.REDIS_ENABLE_TLS === 'true'
+}
+
+if (process.env.REDIS_URL) {
+  try {
+    const url = new URL(process.env.REDIS_URL)
+    redisConfig.host = url.hostname
+    redisConfig.port = parseInt(url.port) || 6379
+    redisConfig.password = url.password || redisConfig.password
+    // Automatically enable TLS if protocol is rediss:
+    if (url.protocol === 'rediss:') {
+      redisConfig.enableTLS = true
+    }
+  } catch (e) {
+    console.warn('Invalid REDIS_URL ignored')
+  }
+}
+
 const config = {
   // 🌐 服务器配置
   server: {
@@ -19,18 +48,7 @@ const config = {
   },
 
   // 📊 Redis配置
-  redis: {
-    host: process.env.REDIS_HOST || '127.0.0.1',
-    port: parseInt(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || '',
-    db: parseInt(process.env.REDIS_DB) || 0,
-    connectTimeout: 10000,
-    commandTimeout: 5000,
-    retryDelayOnFailover: 100,
-    maxRetriesPerRequest: 3,
-    lazyConnect: true,
-    enableTLS: process.env.REDIS_ENABLE_TLS === 'true'
-  },
+  redis: redisConfig,
 
   // 🔗 会话管理配置
   session: {

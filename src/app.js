@@ -6,11 +6,20 @@ const path = require('path')
 const fs = require('fs')
 const bcrypt = require('bcryptjs')
 
-const config = require('../config/config')
+const config = (() => {
+  try {
+    return require('../config/config')
+  } catch (error) {
+    const logger = require('./utils/logger')
+    logger.warn('⚠️ config.js not found, falling back to config.example.js')
+    return require('../config/config.example')
+  }
+})()
 const logger = require('./utils/logger')
 const redis = require('./models/redis')
 const pricingService = require('./services/pricingService')
 const cacheMonitor = require('./utils/cacheMonitor')
+const envBootstrap = require('./utils/envBootstrap')
 
 // Import routes
 const apiRoutes = require('./routes/api')
@@ -50,7 +59,11 @@ class Application {
       // 🔗 连接Redis
       logger.info('🔄 Connecting to Redis...')
       await redis.connect()
-      logger.success('✅ Redis connected successfully')
+            logger.success('✅ Redis connected successfully')
+
+      // 🚀 初始化环境配置（Render等）
+      logger.info('🚀 Bootstrapping from environment variables...')
+      await envBootstrap.initialize()
 
       // 💰 初始化价格服务
       logger.info('🔄 Initializing pricing service...')
@@ -388,6 +401,26 @@ class Application {
       const initFilePath = path.join(__dirname, '..', 'data', 'init.json')
 
       if (!fs.existsSync(initFilePath)) {
+        // Check if ENV vars exist
+        if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
+          logger.info('🔧 Initializing admin credentials from environment variables...')
+          const saltRounds = 10
+          const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, saltRounds)
+
+          const adminCredentials = {
+            username: process.env.ADMIN_USERNAME,
+            passwordHash,
+            createdAt: new Date().toISOString(),
+            lastLogin: null,
+            updatedAt: new Date().toISOString()
+          }
+
+          await redis.setSession('admin_credentials', adminCredentials)
+          logger.success('✅ Admin credentials loaded from environment variables')
+          logger.info(`📋 Admin username: ${adminCredentials.username}`)
+          return
+        }
+
         logger.warn('⚠️ No admin credentials found. Please run npm run setup first.')
         return
       }
