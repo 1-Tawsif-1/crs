@@ -268,6 +268,14 @@ class Application {
         logger.warn('⚠️ Admin SPA dist directory not found, skipping /admin-next route')
       }
 
+      // 🔁 Roo / OpenAI-Compatible alias：将 /v1/* 请求重写为 /openai/v1/*，方便 Roo Code 等客户端
+      this.app.use((req, _res, next) => {
+        if (req.url === '/v1' || req.url.startsWith('/v1/')) {
+          req.url = `/openai${req.url}`
+        }
+        next()
+      })
+
       // 🛣️ 路由
       this.app.use('/api', apiRoutes)
       this.app.use('/api', unifiedRoutes) // 统一智能路由（支持 /v1/chat/completions 等）

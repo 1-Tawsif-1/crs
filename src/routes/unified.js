@@ -7,6 +7,7 @@ const {
   handleStreamGenerateContent: geminiHandleStreamGenerateContent
 } = require('./geminiRoutes')
 const openaiRoutes = require('./openaiRoutes')
+const modelService = require('../services/modelService')
 
 const router = express.Router()
 
@@ -132,6 +133,52 @@ async function routeToBackend(req, res, requestedModel) {
     })
   }
 }
+
+// 📋 OpenAI 兼容的模型查询（重用 ModelService）
+router.get('/v1/models', authenticateApiKey, (req, res) => {
+  try {
+    const models = modelService.getAllModels()
+    res.json({ object: 'list', data: models })
+  } catch (error) {
+    logger.error('❌ Failed to load model list:', error)
+    res.status(500).json({
+      error: {
+        message: 'Failed to load model list',
+        type: 'server_error',
+        code: 'models_unavailable'
+      }
+    })
+  }
+})
+
+router.get('/v1/models/:modelId', authenticateApiKey, (req, res) => {
+  try {
+    const modelId = req.params.modelId
+    const models = modelService.getAllModels()
+    const model = models.find((m) => m.id === modelId)
+
+    if (!model) {
+      return res.status(404).json({
+        error: {
+          message: `Model ${modelId} not found`,
+          type: 'invalid_request_error',
+          code: 'model_not_found'
+        }
+      })
+    }
+
+    res.json({ object: 'model', ...model })
+  } catch (error) {
+    logger.error('❌ Failed to load model info:', error)
+    res.status(500).json({
+      error: {
+        message: 'Failed to load model info',
+        type: 'server_error',
+        code: 'models_unavailable'
+      }
+    })
+  }
+})
 
 // 🔄 OpenAI 兼容的 chat/completions 端点（智能后端路由）
 router.post('/v1/chat/completions', authenticateApiKey, async (req, res) => {
