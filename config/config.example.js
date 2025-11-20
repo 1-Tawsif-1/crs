@@ -11,7 +11,8 @@ let redisConfig = {
   commandTimeout: 5000,
   retryDelayOnFailover: 100,
   maxRetriesPerRequest: 3,
-  lazyConnect: true
+  lazyConnect: true,
+  enableTLS: process.env.REDIS_ENABLE_TLS === 'true'
 }
 
 if (process.env.REDIS_URL) {
@@ -39,7 +40,7 @@ if (process.env.REDIS_URL) {
     if (url.password) {
       redisConfig.password = decodeURIComponent(url.password)
     }
-    if (url.username && url.username !== 'default') {
+    if (url.username) {
       redisConfig.username = url.username
     }
     // Automatically enable TLS for rediss:// protocol
@@ -47,6 +48,7 @@ if (process.env.REDIS_URL) {
       redisConfig.tls = {
         rejectUnauthorized: false
       }
+      redisConfig.enableTLS = true
     }
     console.log(`✅ Parsed REDIS_URL: ${url.hostname}:${redisConfig.port} (TLS: ${!!redisConfig.tls})`)
   } catch (e) {
@@ -57,6 +59,7 @@ if (process.env.REDIS_URL) {
   redisConfig.tls = {
     rejectUnauthorized: false
   }
+  redisConfig.enableTLS = true
 }
 
 const config = {

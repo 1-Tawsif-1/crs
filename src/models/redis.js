@@ -58,16 +58,26 @@ class RedisClient {
 
   async connect() {
     try {
-      this.client = new Redis({
+      const redisOptions = {
         host: config.redis.host,
         port: config.redis.port,
+        username: config.redis.username,
         password: config.redis.password,
         db: config.redis.db,
+        connectTimeout: config.redis.connectTimeout,
+        commandTimeout: config.redis.commandTimeout,
         retryDelayOnFailover: config.redis.retryDelayOnFailover,
         maxRetriesPerRequest: config.redis.maxRetriesPerRequest,
-        lazyConnect: config.redis.lazyConnect,
-        tls: config.redis.enableTLS ? {} : false
-      })
+        lazyConnect: config.redis.lazyConnect
+      }
+
+      if (config.redis?.tls) {
+        redisOptions.tls = config.redis.tls
+      } else if (config.redis.enableTLS) {
+        redisOptions.tls = { rejectUnauthorized: false }
+      }
+
+      this.client = new Redis(redisOptions)
 
       this.client.on('connect', () => {
         this.isConnected = true
