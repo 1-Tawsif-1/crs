@@ -16,7 +16,14 @@ let redisConfig = {
 
 if (process.env.REDIS_URL) {
   try {
-    const url = new URL(process.env.REDIS_URL)
+    // Replace redis:// with rediss:// if needed (Upstash requires TLS)
+    let redisUrl = process.env.REDIS_URL
+    if (redisUrl.startsWith('redis://') && !redisUrl.startsWith('rediss://')) {
+      redisUrl = redisUrl.replace('redis://', 'rediss://')
+      console.log('🔒 Auto-upgrading redis:// to rediss:// for TLS connection')
+    }
+    
+    const url = new URL(redisUrl)
     redisConfig.host = url.hostname
     redisConfig.port = parseInt(url.port) || 6379
     if (url.password) {
@@ -33,7 +40,8 @@ if (process.env.REDIS_URL) {
     }
     console.log(`✅ Parsed REDIS_URL: ${url.hostname}:${redisConfig.port} (TLS: ${!!redisConfig.tls})`)
   } catch (e) {
-    console.warn('⚠️ Invalid REDIS_URL format, using default Redis config:', e.message)
+    console.error('❌ Failed to parse REDIS_URL:', e.message)
+    console.error('   REDIS_URL value:', process.env.REDIS_URL)
   }
 } else if (process.env.REDIS_ENABLE_TLS === 'true') {
   redisConfig.tls = {
